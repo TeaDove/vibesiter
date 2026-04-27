@@ -2,7 +2,7 @@ package webpresentation
 
 import (
 	"time"
-	"ws-lan-chat/pkg/managerservice"
+	"vibesiter/pkg/managerservice"
 
 	"github.com/cockroachdb/errors"
 	"github.com/gofiber/fiber/v3"
@@ -27,7 +27,7 @@ func (r *Presentation) BuildApp() *fiber.App {
 	})
 	app.Use(recover2.New(recover2.Config{EnableStackTrace: true}))
 	app.Use(fiber_utils.MiddlewareLogger())
-	app.Use(fiber_utils.MiddlewareCtxTimeout(29 * time.Second))
+	app.Use(fiber_utils.MiddlewareCtxTimeout(3 * time.Minute))
 	app.Use(cors.New(cors.ConfigDefault))
 
 	appGroup := app.Group("/app")
@@ -37,7 +37,7 @@ func (r *Presentation) BuildApp() *fiber.App {
 			return err
 		}
 
-		resp, err := r.managerService.GenerateApp(c, body.UserPrompt)
+		resp, err := r.managerService.GenerateApp(c.Context(), body.UserPrompt)
 		if err != nil {
 			return errors.Wrap(err, "generate app")
 		}

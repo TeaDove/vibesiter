@@ -1,12 +1,15 @@
 package main
 
 import (
-	"ws-lan-chat/pkg/managerrepo"
-	"ws-lan-chat/pkg/managerservice"
-	"ws-lan-chat/pkg/webpresentation"
+	"vibesiter/pkg/llmsupplier"
+	"vibesiter/pkg/managerrepo"
+	"vibesiter/pkg/managerservice"
+	"vibesiter/pkg/webpresentation"
 
 	"github.com/cockroachdb/errors"
 	"github.com/gofiber/fiber/v3"
+	"github.com/openai/openai-go/v3"
+	"github.com/openai/openai-go/v3/option"
 	"github.com/teadove/teasutils/service_utils/db_utils"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -32,7 +35,12 @@ func build() (*fiber.App, error) {
 
 	msgRepo := managerrepo.New(db)
 
-	chatService := managerservice.NewService(msgRepo)
+	llmSupplier := llmsupplier.NewSupplier(new(openai.NewClient(
+		option.WithBaseURL("http://localhost:11434/v1"),
+		option.WithAPIKey("ollama"),
+	)))
+
+	chatService := managerservice.NewService(msgRepo, llmSupplier)
 
 	presentation := webpresentation.NewPresentation(chatService)
 
