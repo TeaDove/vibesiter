@@ -1,0 +1,52 @@
+package main
+
+import (
+	"ws-lan-chat/pkg/managerrepo"
+	"ws-lan-chat/pkg/managerservice"
+	"ws-lan-chat/pkg/webpresentation"
+
+	"github.com/cockroachdb/errors"
+	"github.com/gofiber/fiber/v3"
+	"github.com/teadove/teasutils/service_utils/db_utils"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
+)
+
+func build() (*fiber.App, error) {
+	db, err := gorm.Open(sqlite.Open(".data/db.sqlite"),
+		&gorm.Config{
+			NamingStrategy: schema.NamingStrategy{SingularTable: true},
+			TranslateError: true,
+			Logger:         db_utils.ZerologAdapter{},
+		},
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "open gorm db")
+	}
+
+	err = db.AutoMigrate(new(managerrepo.Application), new(managerrepo.ApplicationKV))
+	if err != nil {
+		return nil, errors.Wrap(err, "auto migrate")
+	}
+
+	msgRepo := managerrepo.New(db)
+
+	chatService := managerservice.NewService(msgRepo)
+
+	presentation := webpresentation.NewPresentation(chatService)
+
+	return presentation.BuildApp(), nil
+}
+
+func main() {
+	app, err := build()
+	if err != nil {
+		panic(err)
+	}
+
+	err = app.Listen(":8080")
+	if err != nil {
+		panic(err)
+	}
+}

@@ -1,1 +1,1 @@
-# vibesiter
+# ws-lan-chat

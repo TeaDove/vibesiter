@@ -1,0 +1,18 @@
+services:
+  backend:
+    restart: always
+    build:
+      context: .
+      dockerfile: DockerfileBackend
+    volumes:
+      - ".data:/.data"
+
+  frontend:
+    restart: always
+    build:
+      context: .
+      dockerfile: DockerfileFrontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
