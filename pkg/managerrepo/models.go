@@ -2,6 +2,7 @@ package managerrepo
 
 import (
 	"time"
+	"vibesiter/pkg/dto"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -14,11 +15,12 @@ type Application struct {
 	LastAccessedAt time.Time         `gorm:"not null"                 json:"lastAccessedAt"`
 	Status         ApplicationStatus `gorm:"not null"                 json:"status"`
 
-	Title         string  `gorm:"not null"                json:"title"`
-	Description   string  `gorm:"not null"                json:"description"`
-	Slug          string  `gorm:"uniqueIndex;not null"    json:"slug"`
-	UserPrompt    string  `gorm:"not null"                json:"userPrompt"`
-	BackendPrompt *string `json:"backendPrompt,omitempty"`
+	Title         string         `gorm:"not null"                 json:"title"`
+	Description   string         `gorm:"not null"                 json:"description"`
+	Slug          string         `gorm:"uniqueIndex;not null"     json:"slug"`
+	UserPrompt    string         `gorm:"not null"                 json:"userPrompt"`
+	Design        dto.SiteDesign `gorm:"not null;serializer:json" json:"design"`
+	BackendPrompt *string        `json:"backendPrompt,omitempty"`
 }
 
 // ApplicationStatus
@@ -42,4 +44,14 @@ type ApplicationKV struct { // TODO добавить TTL
 	UpdatedAt time.Time `gorm:"not null;autoUpdateTime" json:"updatedAt"`
 
 	Value any `gorm:"not null;serializer:json" json:"value"`
+}
+
+type ApplicationFiles struct {
+	ApplicationID uuid.UUID `gorm:"not null;primaryKey" json:"id"`
+	Path          string    `gorm:"not null;primaryKey" json:"key"`
+
+	CreatedAt time.Time `gorm:"not null;autoCreateTime" json:"createdAt"`
+	UpdatedAt time.Time `gorm:"not null;autoUpdateTime" json:"updatedAt"`
+
+	Content string `gorm:"not null" json:"value"`
 }

@@ -48,13 +48,29 @@ func (r *Service) GenerateApp(ctx context.Context, userPrompt string) (managerre
 		return managerrepo.Application{}, errors.Wrap(err, "extract site meta")
 	}
 
+	design, err := r.llmSupplier.DesignSite(ctx, meta.Slug, userPrompt)
+	if err != nil {
+		return managerrepo.Application{}, errors.Wrap(err, "design site")
+	}
+
 	application.Title = meta.Title
 	application.Description = meta.Description
 	application.Slug = meta.Slug
+	application.Design = design
 
 	err = r.managerRepo.SaveApplication(ctx, &application)
 	if err != nil {
 		return managerrepo.Application{}, errors.Wrap(err, "save application")
+	}
+
+	files, err := r.llmSupplier.GenerateSite(ctx, userPrompt, meta, design)
+	if err != nil {
+		return managerrepo.Application{}, errors.Wrap(err, "generate site")
+	}
+
+	err = r.managerRepo.SaveFiles(ctx, application.ID, files.Files)
+	if err != nil {
+		return managerrepo.Application{}, errors.Wrap(err, "save files")
 	}
 
 	return application, nil

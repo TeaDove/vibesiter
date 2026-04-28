@@ -29,7 +29,11 @@ func build() (*fiber.App, error) {
 		return nil, errors.Wrap(err, "open gorm db")
 	}
 
-	err = db.AutoMigrate(new(managerrepo.Application), new(managerrepo.ApplicationKV))
+	err = db.AutoMigrate(
+		new(managerrepo.Application),
+		new(managerrepo.ApplicationKV),
+		new(managerrepo.ApplicationFiles),
+	)
 	if err != nil {
 		return nil, errors.Wrap(err, "auto migrate")
 	}
