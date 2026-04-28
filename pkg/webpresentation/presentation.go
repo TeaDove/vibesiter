@@ -3,6 +3,7 @@ package webpresentation
 import (
 	"time"
 	"vibesiter/pkg/managerservice"
+	"vibesiter/pkg/validators"
 
 	"github.com/cockroachdb/errors"
 	"github.com/gofiber/fiber/v3"
@@ -23,7 +24,7 @@ func (r *Presentation) BuildApp() *fiber.App {
 	app := fiber.New(fiber.Config{
 		Immutable:       true,
 		ErrorHandler:    fiber_utils.ErrHandler(),
-		StructValidator: fiber_utils.NewDefaultStructValidator(),
+		StructValidator: &fiber_utils.StructValidator{Validator: validators.Validator},
 	})
 	app.Use(recover2.New(recover2.Config{EnableStackTrace: true}))
 	app.Use(fiber_utils.MiddlewareLogger())

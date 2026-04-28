@@ -4,6 +4,7 @@ import (
 	"vibesiter/pkg/llmsupplier"
 	"vibesiter/pkg/managerrepo"
 	"vibesiter/pkg/managerservice"
+	"vibesiter/pkg/settings"
 	"vibesiter/pkg/webpresentation"
 
 	"github.com/cockroachdb/errors"
@@ -35,9 +36,11 @@ func build() (*fiber.App, error) {
 
 	msgRepo := managerrepo.New(db)
 
+	// option.WithBaseURL("http://localhost:11434/v1"),
+	//		option.WithAPIKey("ollama"),
 	llmSupplier := llmsupplier.NewSupplier(new(openai.NewClient(
-		option.WithBaseURL("http://localhost:11434/v1"),
-		option.WithAPIKey("ollama"),
+		option.WithBaseURL(settings.Settings.AIURL),
+		option.WithAPIKey(settings.Settings.AIAPIKEY),
 	)))
 
 	chatService := managerservice.NewService(msgRepo, llmSupplier)

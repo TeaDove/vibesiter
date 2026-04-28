@@ -4,7 +4,10 @@ import (
 	"github.com/teadove/teasutils/service_utils/settings_utils"
 )
 
-type baseSettings struct{}
+type baseSettings struct {
+	AIURL    string `env:"AI_URL"`
+	AIAPIKEY string `env:"AI_API_KEY"`
+}
 
 // Settings
 // nolint: gochecknoglobals // need it
