@@ -36,8 +36,8 @@ func (r *Application) MarshalZerologObject(e *zerolog.Event) {
 		Str("slug", r.Slug)
 }
 
-// TODO rewrite using static files in .data
-type ApplicationFile struct {
+type ApplicationFile struct { // TODO rewrite using static files in .data
+
 	ApplicationID uuid.UUID `gorm:"not null;primaryKey" json:"id"`
 	Path          string    `gorm:"not null;primaryKey" json:"key"`
 

@@ -40,6 +40,7 @@ func build() (*fiber.App, error) {
 	}
 
 	msgRepo := managerrepo.New(db)
+	kvRepo := kvrepo.New(db)
 
 	// option.WithBaseURL("http://localhost:11434/v1"),
 	//		option.WithAPIKey("ollama"),
@@ -48,7 +49,7 @@ func build() (*fiber.App, error) {
 		option.WithAPIKey(settings.Settings.AIAPIKEY),
 	)))
 
-	chatService := managerservice.NewService(msgRepo, llmSupplier)
+	chatService := managerservice.NewService(msgRepo, kvRepo, llmSupplier)
 
 	presentation := webpresentation.NewPresentation(chatService)
 

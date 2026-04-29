@@ -93,3 +93,7 @@ func (r *Service) createApplication(ctx context.Context, application *managerrep
 
 	return errors.New("failed to create slug")
 }
+
+func (r *Service) ListApps(ctx context.Context) ([]managerrepo.Application, error) {
+	return r.managerRepo.SelectApplications(ctx)
+}

@@ -5,10 +5,10 @@ Original user prompt:
 {{ .UserPrompt }}
 
 Application metadata:
-{{ .MetaJson }}
+{{ call .jsonMarshal .MetaJson }}
 
 Application design:
-{{ .Design }}
+{{ call .jsonMarshal .Design }}
 
 Current logical request:
-{{ .Request }}
+{{ call .jsonMarshal .Request }}

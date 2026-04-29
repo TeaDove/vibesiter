@@ -4,7 +4,7 @@ Original user prompt:
 {{ .UserPrompt }}
 
 Site metadata:
-{{ .Meta }}
+{{ call .jsonMarshal .Meta }}
 
 Site design:
-{{ .Design }}
+{{ call .jsonMarshal .Design }}

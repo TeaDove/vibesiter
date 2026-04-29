@@ -32,12 +32,12 @@ func (r *Repo) InsertApplication(ctx context.Context, v *Application) error {
 	return nil
 }
 
-func (r *Repo) InsertFiles(ctx context.Context, appId uuid.UUID, files []dto.File) error {
+func (r *Repo) InsertFiles(ctx context.Context, appID uuid.UUID, files []dto.File) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		for _, file := range files {
 			err := tx.WithContext(ctx).Save(
 				&ApplicationFile{
-					ApplicationID: appId,
+					ApplicationID: appID,
 					Path:          file.Path,
 					Content:       []byte(file.Content),
 				},
@@ -64,6 +64,15 @@ func (r *Repo) SelectApplicationBySlug(ctx context.Context, slug string) (Applic
 	v, err := gorm.G[Application](r.db).Where("slug = ?", slug).Take(ctx)
 	if err != nil {
 		return Application{}, errors.Wrap(err, "select by slug")
+	}
+
+	return v, nil
+}
+
+func (r *Repo) SelectApplications(ctx context.Context) ([]Application, error) {
+	v, err := gorm.G[Application](r.db).Order("id desc").Find(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "select")
 	}
 
 	return v, nil

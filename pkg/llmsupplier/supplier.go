@@ -2,11 +2,10 @@ package llmsupplier
 
 import (
 	"context"
-	_ "embed"
 	"encoding/json"
 	"reflect"
-	"text/template"
 	"time"
+	"vibesiter/pkg/llmsupplier/prompts"
 	"vibesiter/pkg/validators"
 
 	"github.com/cockroachdb/errors"
@@ -20,55 +19,18 @@ type Supplier struct {
 	client *openai.Client
 	model  string
 
-	systemPromptTemplateDesignSite *template.Template
-	systemPromptTemplateGenerate   *template.Template
-	userPromptTemplateGenerate     *template.Template
-	systemPromptTemplateHTTP       *template.Template
-	userPromptTemplateHTTP         *template.Template
+	prompts *prompts.Prompts
 }
-
-var (
-	//go:embed design.gohtml
-	systemPromptDesignSite string
-	//go:embed generate_system.gohtml
-	systemPromptGenerate string
-	//go:embed generate_user.gohtml
-	userPromptGenerate string
-	//go:embed http_system.gohtml
-	systemPromptHTTP string
-	//go:embed http_user.gohtml
-	userPromptHTTP string
-)
 
 func NewSupplier(client *openai.Client) *Supplier {
 	r := &Supplier{client: client, model: "deepseek-v4-flash"} // qwen3:8b
 
-	var err error
-	// TODO move to separate system
-	r.systemPromptTemplateDesignSite, err = template.New("example").Parse(systemPromptDesignSite)
+	promptsTemplates, err := prompts.NewPrompts()
 	if err != nil {
-		panic(errors.Wrap(err, "parse system prompt template"))
+		panic(errors.Wrap(err, "create prompts templates"))
 	}
 
-	r.systemPromptTemplateGenerate, err = template.New("example").Parse(systemPromptGenerate)
-	if err != nil {
-		panic(errors.Wrap(err, "parse system prompt template"))
-	}
-
-	r.userPromptTemplateGenerate, err = template.New("example").Parse(userPromptGenerate)
-	if err != nil {
-		panic(errors.Wrap(err, "parse system prompt template"))
-	}
-
-	r.systemPromptTemplateHTTP, err = template.New("example").Parse(systemPromptHTTP)
-	if err != nil {
-		panic(errors.Wrap(err, "parse system prompt template"))
-	}
-
-	r.userPromptTemplateHTTP, err = template.New("example").Parse(userPromptHTTP)
-	if err != nil {
-		panic(errors.Wrap(err, "parse system prompt template"))
-	}
+	r.prompts = promptsTemplates
 
 	return r
 }

@@ -35,6 +35,14 @@ func (r *Presentation) BuildApp() *fiber.App {
 	app.Use(cors.New(cors.ConfigDefault))
 
 	appGroup := app.Group("/app")
+	appGroup.Get("/", func(c fiber.Ctx) error {
+		resp, err := r.managerService.ListApps(c.Context())
+		if err != nil {
+			return errors.Wrap(err, "list apps")
+		}
+
+		return c.JSON(resp)
+	})
 	appGroup.Post("/", func(c fiber.Ctx) error {
 		body, err := fiber_utils.BindJSON[GenerateAppRequest](c)
 		if err != nil {

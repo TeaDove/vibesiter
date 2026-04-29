@@ -2,4 +2,4 @@ package validators
 
 import "github.com/go-playground/validator/v10"
 
-var Validator = validator.New(validator.WithRequiredStructEnabled())
+var Validator = validator.New(validator.WithRequiredStructEnabled()) //nolint: goctitic, gochecknoglobals // required

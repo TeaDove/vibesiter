@@ -1,26 +1,21 @@
 package llmsupplier
 
 import (
-	"bytes"
 	"context"
-	_ "embed"
 	"vibesiter/pkg/dto"
 
 	"github.com/cockroachdb/errors"
 )
 
 func (r *Supplier) DesignSite(ctx context.Context, slug string, userPrompt string) (dto.SiteDesign, error) {
-	var (
-		output dto.SiteDesign
-		buf    bytes.Buffer
-	)
-
-	err := r.systemPromptTemplateDesignSite.Execute(&buf, map[string]any{"Slug": slug})
+	systemPrompt, err := r.prompts.Render("design", map[string]any{"Slug": slug})
 	if err != nil {
 		return dto.SiteDesign{}, errors.Wrap(err, "execute design site")
 	}
 
-	err = r.chat(ctx, buf.String(), userPrompt, &output)
+	var output dto.SiteDesign
+
+	err = r.chat(ctx, systemPrompt, userPrompt, &output)
 	if err != nil {
 		return dto.SiteDesign{}, errors.Wrap(err, "chat")
 	}
@@ -34,26 +29,21 @@ func (r *Supplier) GenerateSite(
 	meta SiteMeta,
 	design dto.SiteDesign,
 ) (dto.Files, error) {
-	var (
-		output    dto.Files
-		bufUser   bytes.Buffer
-		bufSystem bytes.Buffer
-	)
+	var output dto.Files
 
-	err := r.systemPromptTemplateGenerate.Execute(&bufSystem, map[string]any{"Slug": meta.Slug})
+	systemPrompt, err := r.prompts.Render("generate_system", map[string]any{"Slug": meta.Slug})
 	if err != nil {
 		return dto.Files{}, errors.Wrap(err, "execute design site")
 	}
 
-	err = r.userPromptTemplateGenerate.Execute(
-		&bufUser,
+	userPrompt, err = r.prompts.Render("generate_user",
 		map[string]any{"Slug": meta.Slug, "UserPrompt": userPrompt, "Meta": meta, "Design": design},
 	)
 	if err != nil {
 		return dto.Files{}, errors.Wrap(err, "execute design site")
 	}
 
-	err = r.chat(ctx, bufSystem.String(), bufUser.String(), &output)
+	err = r.chat(ctx, systemPrompt, userPrompt, &output)
 	if err != nil {
 		return dto.Files{}, errors.Wrap(err, "chat")
 	}

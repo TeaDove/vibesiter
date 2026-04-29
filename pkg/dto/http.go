@@ -11,3 +11,8 @@ type HTTPResponse struct {
 	ContentType string `json:"contentType,omitempty"`
 	Body        any    `json:"body,omitempty"`
 }
+
+type LLMHTTPResponse struct {
+	Response *HTTPResponse `json:"response,omitempty"`
+	Actions  []ActionKV    `json:"actions,omitempty"`
+}

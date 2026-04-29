@@ -1,7 +1,6 @@
 package llmsupplier
 
 import (
-	"bytes"
 	"context"
 	"vibesiter/pkg/dto"
 	"vibesiter/pkg/managerrepo"
@@ -13,19 +12,13 @@ func (r *Supplier) HTTP(
 	ctx context.Context,
 	app *managerrepo.Application,
 	req *dto.HTTPRequest,
-) (dto.HTTPResponse, error) {
-	var (
-		output    dto.HTTPResponse
-		bufUser   bytes.Buffer
-		bufSystem bytes.Buffer
-	)
-
-	err := r.systemPromptTemplateHTTP.Execute(&bufSystem, map[string]any{"Slug": app.Slug})
+) (dto.LLMHTTPResponse, error) {
+	systemPrompt, err := r.prompts.Render("http_system", map[string]any{"Slug": app.Slug})
 	if err != nil {
-		return dto.HTTPResponse{}, errors.Wrap(err, "execute design site")
+		return dto.LLMHTTPResponse{}, errors.Wrap(err, "execute design site")
 	}
 
-	err = r.userPromptTemplateHTTP.Execute(&bufUser,
+	userPrompt, err := r.prompts.Render("http_user",
 		map[string]any{
 			"Slug":       app.Slug,
 			"UserPrompt": app.UserPrompt,
@@ -35,12 +28,14 @@ func (r *Supplier) HTTP(
 		},
 	)
 	if err != nil {
-		return dto.HTTPResponse{}, errors.Wrap(err, "execute design site")
+		return dto.LLMHTTPResponse{}, errors.Wrap(err, "execute design site")
 	}
 
-	err = r.chat(ctx, bufSystem.String(), bufUser.String(), &output)
+	var output dto.LLMHTTPResponse
+
+	err = r.chat(ctx, systemPrompt, userPrompt, &output)
 	if err != nil {
-		return dto.HTTPResponse{}, errors.Wrap(err, "chat")
+		return dto.LLMHTTPResponse{}, errors.Wrap(err, "chat")
 	}
 
 	return output, nil
