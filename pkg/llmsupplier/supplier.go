@@ -82,7 +82,8 @@ func (r *Supplier) chat(ctx context.Context, systemPrompt string, userPrompt str
 
 	resp, err := r.client.Chat.Completions.New(ctx,
 		openai.ChatCompletionNewParams{
-			Model: r.model,
+			Temperature: openai.Float(0),
+			Model:       r.model,
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				{
 					OfSystem: new(openai.ChatCompletionSystemMessageParam{
