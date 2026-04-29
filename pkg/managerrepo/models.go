@@ -36,22 +36,13 @@ func (r *Application) MarshalZerologObject(e *zerolog.Event) {
 		Str("slug", r.Slug)
 }
 
-type ApplicationKV struct { // TODO добавить TTL
-	ApplicationID uuid.UUID `gorm:"not null;primaryKey" json:"id"`
-	Key           string    `gorm:"not null;primaryKey" json:"key"`
-
-	CreatedAt time.Time `gorm:"not null;autoCreateTime" json:"createdAt"`
-	UpdatedAt time.Time `gorm:"not null;autoUpdateTime" json:"updatedAt"`
-
-	Value any `gorm:"not null;serializer:json" json:"value"`
-}
-
-type ApplicationFiles struct {
+// TODO rewrite using static files in .data
+type ApplicationFile struct {
 	ApplicationID uuid.UUID `gorm:"not null;primaryKey" json:"id"`
 	Path          string    `gorm:"not null;primaryKey" json:"key"`
 
 	CreatedAt time.Time `gorm:"not null;autoCreateTime" json:"createdAt"`
 	UpdatedAt time.Time `gorm:"not null;autoUpdateTime" json:"updatedAt"`
 
-	Content string `gorm:"not null" json:"value"`
+	Content []byte `gorm:"not null" json:"value"`
 }

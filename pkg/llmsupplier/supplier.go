@@ -2,6 +2,7 @@ package llmsupplier
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"reflect"
 	"text/template"
@@ -22,13 +23,28 @@ type Supplier struct {
 	systemPromptTemplateDesignSite *template.Template
 	systemPromptTemplateGenerate   *template.Template
 	userPromptTemplateGenerate     *template.Template
+	systemPromptTemplateHTTP       *template.Template
+	userPromptTemplateHTTP         *template.Template
 }
+
+var (
+	//go:embed design.gohtml
+	systemPromptDesignSite string
+	//go:embed generate_system.gohtml
+	systemPromptGenerate string
+	//go:embed generate_user.gohtml
+	userPromptGenerate string
+	//go:embed http_system.gohtml
+	systemPromptHTTP string
+	//go:embed http_user.gohtml
+	userPromptHTTP string
+)
 
 func NewSupplier(client *openai.Client) *Supplier {
 	r := &Supplier{client: client, model: "deepseek-v4-flash"} // qwen3:8b
 
 	var err error
-
+	// TODO move to separate system
 	r.systemPromptTemplateDesignSite, err = template.New("example").Parse(systemPromptDesignSite)
 	if err != nil {
 		panic(errors.Wrap(err, "parse system prompt template"))
@@ -40,6 +56,16 @@ func NewSupplier(client *openai.Client) *Supplier {
 	}
 
 	r.userPromptTemplateGenerate, err = template.New("example").Parse(userPromptGenerate)
+	if err != nil {
+		panic(errors.Wrap(err, "parse system prompt template"))
+	}
+
+	r.systemPromptTemplateHTTP, err = template.New("example").Parse(systemPromptHTTP)
+	if err != nil {
+		panic(errors.Wrap(err, "parse system prompt template"))
+	}
+
+	r.userPromptTemplateHTTP, err = template.New("example").Parse(userPromptHTTP)
 	if err != nil {
 		panic(errors.Wrap(err, "parse system prompt template"))
 	}
@@ -83,7 +109,7 @@ func (r *Supplier) chat(ctx context.Context, systemPrompt string, userPrompt str
 
 	raw := resp.Choices[0].Message.Content
 
-	zerolog.Ctx(ctx).Info().
+	zerolog.Ctx(ctx).Debug().
 		Str("user_prompt", redact_utils.TrimSized(userPrompt, 100)).
 		Str("raw", redact_utils.TrimSized(raw, 100)).
 		Str("elapsed", time_utils.RoundDuration(time.Since(t0))).

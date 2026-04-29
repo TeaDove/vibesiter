@@ -1,30 +1,46 @@
 package llmsupplier
 
 import (
+	"bytes"
 	"context"
+	"vibesiter/pkg/dto"
+	"vibesiter/pkg/managerrepo"
 
 	"github.com/cockroachdb/errors"
 )
 
-type HTTPRequest struct {
-	Method  string            `json:"method"`
-	Path    string            `json:"path"`
-	Headers map[string]string `json:"headers"`
-	Body    any               `json:"body"`
-}
+func (r *Supplier) HTTP(
+	ctx context.Context,
+	app *managerrepo.Application,
+	req *dto.HTTPRequest,
+) (dto.HTTPResponse, error) {
+	var (
+		output    dto.HTTPResponse
+		bufUser   bytes.Buffer
+		bufSystem bytes.Buffer
+	)
 
-type HTTPResponse struct {
-	StatusCode  int    `json:"statusCode"  validate:"required"`
-	ContentType string `json:"contentType" validate:"required"`
-	Body        any    `json:"body"`
-}
-
-func (r *Supplier) HTTP(ctx context.Context, backendPrompt string, req *HTTPRequest) (HTTPResponse, error) {
-	var output HTTPResponse
-
-	err := r.chat(ctx, "", "", output)
+	err := r.systemPromptTemplateHTTP.Execute(&bufSystem, map[string]any{"Slug": app.Slug})
 	if err != nil {
-		return HTTPResponse{}, errors.Wrap(err, "chat")
+		return dto.HTTPResponse{}, errors.Wrap(err, "execute design site")
+	}
+
+	err = r.userPromptTemplateHTTP.Execute(&bufUser,
+		map[string]any{
+			"Slug":       app.Slug,
+			"UserPrompt": app.UserPrompt,
+			"MetaJson":   map[string]any{"slug": app.Slug, "title": app.Title, "description": app.Description},
+			"Design":     app.Design,
+			"Request":    req,
+		},
+	)
+	if err != nil {
+		return dto.HTTPResponse{}, errors.Wrap(err, "execute design site")
+	}
+
+	err = r.chat(ctx, bufSystem.String(), bufUser.String(), &output)
+	if err != nil {
+		return dto.HTTPResponse{}, errors.Wrap(err, "chat")
 	}
 
 	return output, nil

@@ -2,7 +2,7 @@ package managerrepo
 
 import (
 	"context"
-	"vibesiter/pkg/llmsupplier"
+	"vibesiter/pkg/dto"
 
 	"github.com/cockroachdb/errors"
 	"github.com/google/uuid"
@@ -19,8 +19,8 @@ func New(db *gorm.DB) *Repo {
 	return &Repo{db: db}
 }
 
-func (r *Repo) SaveApplication(ctx context.Context, v *Application) error {
-	err := r.db.WithContext(ctx).Save(v).Error
+func (r *Repo) InsertApplication(ctx context.Context, v *Application) error {
+	err := r.db.WithContext(ctx).Create(v).Error
 	if err != nil {
 		return errors.Wrap(err, "save app")
 	}
@@ -32,14 +32,16 @@ func (r *Repo) SaveApplication(ctx context.Context, v *Application) error {
 	return nil
 }
 
-func (r *Repo) SaveFiles(ctx context.Context, appId uuid.UUID, files []llmsupplier.File) error {
+func (r *Repo) InsertFiles(ctx context.Context, appId uuid.UUID, files []dto.File) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		for _, file := range files {
-			err := tx.WithContext(ctx).Save(&ApplicationFiles{
-				ApplicationID: appId,
-				Path:          file.Path,
-				Content:       file.Content,
-			}).Error
+			err := tx.WithContext(ctx).Save(
+				&ApplicationFile{
+					ApplicationID: appId,
+					Path:          file.Path,
+					Content:       []byte(file.Content),
+				},
+			).Error
 			if err != nil {
 				return errors.Wrap(err, "save files")
 			}
@@ -56,4 +58,25 @@ func (r *Repo) SaveFiles(ctx context.Context, appId uuid.UUID, files []llmsuppli
 		Msg("files.saved")
 
 	return nil
+}
+
+func (r *Repo) SelectApplicationBySlug(ctx context.Context, slug string) (Application, error) {
+	v, err := gorm.G[Application](r.db).Where("slug = ?", slug).Take(ctx)
+	if err != nil {
+		return Application{}, errors.Wrap(err, "select by slug")
+	}
+
+	return v, nil
+}
+
+func (r *Repo) SelectFile(ctx context.Context, appID uuid.UUID, path string) (ApplicationFile, error) {
+	v, err := gorm.G[ApplicationFile](r.db).
+		Where("application_id = ?", appID.String()).
+		Where("path = ?", path).
+		Take(ctx)
+	if err != nil {
+		return ApplicationFile{}, errors.Wrap(err, "select by app and path")
+	}
+
+	return v, nil
 }

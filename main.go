@@ -1,6 +1,7 @@
 package main
 
 import (
+	"vibesiter/pkg/kvrepo"
 	"vibesiter/pkg/llmsupplier"
 	"vibesiter/pkg/managerrepo"
 	"vibesiter/pkg/managerservice"
@@ -31,8 +32,8 @@ func build() (*fiber.App, error) {
 
 	err = db.AutoMigrate(
 		new(managerrepo.Application),
-		new(managerrepo.ApplicationKV),
-		new(managerrepo.ApplicationFiles),
+		new(kvrepo.ApplicationKV),
+		new(managerrepo.ApplicationFile),
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "auto migrate")
