@@ -25,6 +25,8 @@ var ErrInvalidApplicationStatus = fmt.Errorf("not a valid ApplicationStatus, try
 
 const _ApplicationStatusName = "CREATINGACTIVEARCHIVED"
 
+
+
 var _ApplicationStatusNames = []string{
 	_ApplicationStatusName[0:8],
 	_ApplicationStatusName[8:14],

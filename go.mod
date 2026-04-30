@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/openai/openai-go/v3 v3.33.0
 	github.com/rs/zerolog v1.35.1
-	github.com/teadove/teasutils/fiber_utils v0.3.3
+	github.com/teadove/teasutils/fiber_utils v0.3.4
 	github.com/teadove/teasutils/service_utils v0.1.3
 	github.com/teadove/teasutils/utils v0.3.4
 	gorm.io/driver/sqlite v1.6.0

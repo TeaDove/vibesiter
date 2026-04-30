@@ -1,17 +1,20 @@
 package webpresentation
 
 import (
+	_ "embed"
 	"fmt"
 	"strings"
 	"time"
 	"vibesiter/pkg/dto"
 	"vibesiter/pkg/managerservice"
 	"vibesiter/pkg/validators"
+	"vibesiter/pkg/webpresentation/frontend"
 
 	"github.com/cockroachdb/errors"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cors"
 	recover2 "github.com/gofiber/fiber/v3/middleware/recover"
+	"github.com/gofiber/fiber/v3/middleware/static"
 	"github.com/teadove/teasutils/fiber_utils"
 )
 
@@ -23,6 +26,9 @@ func NewPresentation(managerService *managerservice.Service) *Presentation {
 	return &Presentation{managerService}
 }
 
+//go:embed openapi.yaml
+var openapiSpec []byte
+
 func (r *Presentation) BuildApp() *fiber.App {
 	app := fiber.New(fiber.Config{
 		Immutable:       true,
@@ -33,9 +39,10 @@ func (r *Presentation) BuildApp() *fiber.App {
 	app.Use(fiber_utils.MiddlewareLogger())
 	app.Use(fiber_utils.MiddlewareCtxTimeout(3 * time.Minute))
 	app.Use(cors.New(cors.ConfigDefault))
+	fiber_utils.WithSwagger(app, openapiSpec)
 
-	appGroup := app.Group("/app")
-	appGroup.Get("/", func(c fiber.Ctx) error {
+	applicationGroup := app.Group("/apps")
+	applicationGroup.Get("/", func(c fiber.Ctx) error {
 		resp, err := r.managerService.ListApps(c.Context())
 		if err != nil {
 			return errors.Wrap(err, "list apps")
@@ -43,7 +50,7 @@ func (r *Presentation) BuildApp() *fiber.App {
 
 		return c.JSON(resp)
 	})
-	appGroup.Post("/", func(c fiber.Ctx) error {
+	applicationGroup.Post("/", func(c fiber.Ctx) error {
 		body, err := fiber_utils.BindJSON[GenerateAppRequest](c)
 		if err != nil {
 			return err
@@ -56,7 +63,7 @@ func (r *Presentation) BuildApp() *fiber.App {
 
 		return c.JSON(resp)
 	})
-	appGroup.Post("/:slug/raw", func(c fiber.Ctx) error {
+	applicationGroup.Post("/:slug/raw", func(c fiber.Ctx) error {
 		slug := c.Params("slug")
 
 		req, err := fiber_utils.BindJSON[dto.HTTPRequest](c)
@@ -84,18 +91,18 @@ func (r *Presentation) BuildApp() *fiber.App {
 			return c.JSON(body)
 		}
 	})
-	appGroup.Get("/:slug", func(c fiber.Ctx) error {
-		return c.Redirect().To(fmt.Sprintf("/app/%s/index.html", c.Params("slug")))
+	applicationGroup.Get("/:slug", func(c fiber.Ctx) error {
+		return c.Redirect().To(fmt.Sprintf("/apps/%s/index.html", c.Params("slug")))
 	})
-	appGroup.Get("/:slug/", func(c fiber.Ctx) error {
-		return c.Redirect().To(fmt.Sprintf("/app/%s/index.html", c.Params("slug")))
+	applicationGroup.Get("/:slug/", func(c fiber.Ctx) error {
+		return c.Redirect().To(fmt.Sprintf("/apps/%s/index.html", c.Params("slug")))
 	})
-	appGroup.Get("/:slug/:path", func(c fiber.Ctx) error {
+	applicationGroup.Get("/:slug/:path", func(c fiber.Ctx) error {
 		slug := c.Params("slug")
 
 		path := c.Params("path")
 		if path == "" {
-			return c.Redirect().To(fmt.Sprintf("/app/%s/index.html", slug))
+			return c.Redirect().To(fmt.Sprintf("/apps/%s/index.html", slug))
 		}
 
 		resp, err := r.managerService.Serve(c.Context(), slug, path)
@@ -105,6 +112,8 @@ func (r *Presentation) BuildApp() *fiber.App {
 
 		return c.Type(strings.Split(path, ".")[len(strings.Split(path, "."))-1]).Send(resp)
 	})
+
+	app.Get("/", static.New("", static.Config{FS: frontend.Assets}))
 
 	return app
 }

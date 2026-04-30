@@ -1,0 +1,477 @@
+openapi: 3.1.0
+info:
+  title: Vibesiter web presentation API
+  version: 0.0.0
+  description: HTTP API for listing and generating vibe-coded apps and proxying requests into a generated app.
+
+servers:
+  - url: /
+
+paths:
+  /apps/:
+    get:
+      operationId: listApps
+      summary: List applications
+      responses:
+        "200":
+          description: All applications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Application"
+              examples:
+                twoApps:
+                  $ref: "#/components/examples/ListAppsSample"
+        default:
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: generateApp
+      summary: Generate a new application from a prompt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateAppRequest"
+            example:
+              userPrompt: A minimal todo list with dark theme, track all items on backend, no auth.
+      responses:
+        "200":
+          description: Created application record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+              examples:
+                created:
+                  $ref: "#/components/examples/ApplicationActive"
+        default:
+          $ref: "#/components/responses/Error"
+
+  /apps/{slug}:
+    get:
+      operationId: redirectAppRoot
+      summary: Redirect to app static entry (index.html)
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "302":
+          description: Redirect to /apps/{slug}/index.html
+          headers:
+            Location:
+              schema:
+                type: string
+                example: /apps/acme-todos/index.html
+
+  /apps/{slug}/:
+    get:
+      operationId: redirectAppRootTrailingSlash
+      summary: Redirect to app static entry (index.html)
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "302":
+          description: Redirect to /apps/{slug}/index.html
+          headers:
+            Location:
+              schema:
+                type: string
+                example: /apps/acme-todos/index.html
+
+  /apps/{slug}/raw:
+    post:
+      operationId: handleAppHTTPRaw
+      summary: Execute an HTTP-style request inside the generated app (method/path/body)
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HTTPRequest"
+            examples:
+              getItems:
+                summary: GET JSON collection
+                description: Typical GET without body
+                value:
+                  method: GET
+                  path: /api/items
+              createItem:
+                summary: POST JSON body
+                value:
+                  method: POST
+                  path: /api/items
+                  body:
+                    title: Buy milk
+                    done: false
+      responses:
+        "200":
+          description: |
+            Proxied response. Status and Content-Type reflect the inner response.
+
+            If Content-Type is application/json, the body is JSON shaped as HTTPResponse.
+
+            Otherwise the body is raw (string, bytes, or JSON value) without the HTTPResponse wrapper.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPResponse"
+              examples:
+                envelope:
+                  summary: Full HTTPResponse (when inner content-type is application/json)
+                  value:
+                    status: 200
+                    contentType: application/json
+                    body:
+                      items:
+                        - id: "1"
+                          title: Buy milk
+                          done: false
+                innerJsonOnly:
+                  summary: Inner JSON payload only (other content-types)
+                  value:
+                    ok: true
+                    count: 3
+            text/plain:
+              schema:
+                type: string
+              example: "<!DOCTYPE html><html><body>Hello</body></html>"
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        default:
+          $ref: "#/components/responses/Error"
+
+components:
+  parameters:
+    Slug:
+      name: slug
+      in: path
+      required: true
+      description: Application slug from generation
+      schema:
+        type: string
+        example: acme-todos
+
+  responses:
+    Error:
+      description: Error (shape depends on fiber_utils error handler)
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: true
+          example:
+            error: validation failed
+            details: "Key: 'GenerateAppRequest.UserPrompt' Error:Field validation for 'UserPrompt' failed on the 'required' tag"
+
+  examples:
+    ListAppsSample:
+      summary: Two apps (active and generating)
+      value:
+        - id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+          createdAt: "2026-04-30T12:00:00Z"
+          updatedAt: "2026-04-30T12:05:00Z"
+          lastAccessedAt: "2026-04-30T12:10:00Z"
+          status: ACTIVE
+          title: Acme Todos
+          description: Simple task list UI
+          slug: acme-todos
+          userPrompt: Dark themed todo list
+          backendPrompt: null
+          design:
+            pages:
+              - path: /
+                title: Todos
+                description: Main list view
+            api_routes:
+              - method: GET
+                path: /api/items
+                description: List todos
+                request: "{}"
+                response: "{ items: [{ id, title, done }] }"
+                uses_kv: true
+            kv_schema:
+              - key: items
+                description: Stored todo records
+                value_schema: "array of { id, title, done }"
+            files:
+              - path: index.html
+                description: Single-page shell
+              - path: app.js
+                description: Client logic
+            constraints:
+              - No external CDN required
+        - id: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+          createdAt: "2026-04-30T12:00:00Z"
+          updatedAt: "2026-04-30T12:00:01Z"
+          lastAccessedAt: "2026-04-30T12:00:00Z"
+          status: CREATING
+          title: ""
+          description: ""
+          slug: weather-widget
+          userPrompt: Small weather card for one city
+          backendPrompt: null
+          design:
+            pages:
+              - path: /
+                title: Placeholder
+                description: Design not finalized
+            files:
+              - path: index.html
+                description: Placeholder file
+            constraints: []
+
+    ApplicationActive:
+      summary: Active app with small design
+      value:
+        id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        createdAt: "2026-04-30T12:00:00Z"
+        updatedAt: "2026-04-30T12:05:00Z"
+        lastAccessedAt: "2026-04-30T12:10:00Z"
+        status: ACTIVE
+        title: Acme Todos
+        description: Simple task list UI
+        slug: acme-todos
+        userPrompt: Dark themed todo list
+        backendPrompt: null
+        design:
+          pages:
+            - path: /
+              title: Todos
+              description: Main list view
+          api_routes:
+            - method: GET
+              path: /api/items
+              description: List todos
+              request: "{}"
+              response: "{ items: [{ id, title, done }] }"
+              uses_kv: true
+          kv_schema:
+            - key: items
+              description: Stored todo records
+              value_schema: "array of { id, title, done }"
+          files:
+            - path: index.html
+              description: Single-page shell
+            - path: app.js
+              description: Client logic
+          constraints:
+            - No external CDN required
+
+    ApplicationCreating:
+      summary: App still generating
+      value:
+        id: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+        createdAt: "2026-04-30T12:00:00Z"
+        updatedAt: "2026-04-30T12:00:01Z"
+        lastAccessedAt: "2026-04-30T12:00:00Z"
+        status: CREATING
+        title: ""
+        description: ""
+        slug: weather-widget
+        userPrompt: Small weather card for one city
+        backendPrompt: null
+        design:
+          pages:
+            - path: /
+              title: Placeholder
+              description: Design not finalized
+          files:
+            - path: index.html
+              description: Placeholder file
+          constraints: []
+
+  schemas:
+    GenerateAppRequest:
+      type: object
+      required:
+        - userPrompt
+      properties:
+        userPrompt:
+          type: string
+          example: Landing page for a coffee shop with menu section and opening hours.
+
+    HTTPRequest:
+      type: object
+      required:
+        - method
+        - path
+      properties:
+        method:
+          type: string
+          example: GET
+        path:
+          type: string
+          example: /api/health
+        body: {}
+
+    HTTPResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: integer
+          example: 200
+        contentType:
+          type: string
+          example: application/json
+        body: {}
+
+    Application:
+      type: object
+      required:
+        - id
+        - createdAt
+        - updatedAt
+        - lastAccessedAt
+        - status
+        - title
+        - description
+        - slug
+        - userPrompt
+        - design
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        lastAccessedAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          description: ApplicationStatus as enum name; JSON encodes via TextMarshaler (String)
+          enum: [CREATING, ACTIVE, ARCHIVED]
+          example: ACTIVE
+        title:
+          type: string
+          example: Acme Todos
+        description:
+          type: string
+          example: Simple task list UI
+        slug:
+          type: string
+          example: acme-todos
+        userPrompt:
+          type: string
+          example: Dark themed todo list
+        design:
+          $ref: "#/components/schemas/SiteDesign"
+        backendPrompt:
+          type: string
+          nullable: true
+          example: null
+
+    SiteDesign:
+      type: object
+      required:
+        - pages
+        - files
+      properties:
+        pages:
+          type: array
+          items:
+            $ref: "#/components/schemas/SitePage"
+        api_routes:
+          type: array
+          items:
+            $ref: "#/components/schemas/SiteAPIRoute"
+        kv_schema:
+          type: array
+          items:
+            $ref: "#/components/schemas/SiteKVEntry"
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/SiteFilePlan"
+        constraints:
+          type: array
+          items:
+            type: string
+
+    SitePage:
+      type: object
+      required:
+        - path
+        - title
+        - description
+      properties:
+        path:
+          type: string
+          example: /
+        title:
+          type: string
+          example: Home
+        description:
+          type: string
+          example: Landing view
+
+    SiteAPIRoute:
+      type: object
+      required:
+        - method
+        - path
+        - description
+        - request
+        - response
+      properties:
+        method:
+          type: string
+          example: GET
+        path:
+          type: string
+          example: /api/items
+        description:
+          type: string
+          example: List resources
+        request:
+          type: string
+          example: "{}"
+        response:
+          type: string
+          example: "{ items: [] }"
+        uses_kv:
+          type: boolean
+          example: false
+
+    SiteKVEntry:
+      type: object
+      required:
+        - key
+        - description
+        - value_schema
+      properties:
+        key:
+          type: string
+          example: items
+        description:
+          type: string
+          example: Todo rows
+        value_schema:
+          type: string
+          example: array of objects
+
+    SiteFilePlan:
+      type: object
+      required:
+        - path
+        - description
+      properties:
+        path:
+          type: string
+          example: index.html
+        description:
+          type: string
+          example: Entry HTML

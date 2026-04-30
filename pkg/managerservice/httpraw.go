@@ -7,6 +7,7 @@ import (
 
 	"github.com/cockroachdb/errors"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func (r *Service) HandleHTTP(ctx context.Context, appSlug string, req *dto.HTTPRequest) (dto.HTTPResponse, error) {
@@ -60,7 +61,7 @@ func (r *Service) executeActions(
 			keys = append(keys, kvs...)
 		case dto.ActionTypeKvGet:
 			kv, err := r.kvRepo.Get(ctx, appID, action.Key)
-			if err != nil {
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 				return nil, errors.Wrap(err, "get kv")
 			}
 

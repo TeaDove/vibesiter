@@ -127,6 +127,8 @@ github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
 github.com/teadove/teasutils/fiber_utils v0.3.3 h1:XXStSg6i+NvoQDonFANWfjOCKjjn6YHbJlFKlhPlIbM=
 github.com/teadove/teasutils/fiber_utils v0.3.3/go.mod h1:SJ8F4aRJokE+dS2H4RWH/7OerZUMsz3jFBNrUe22+yU=
+github.com/teadove/teasutils/fiber_utils v0.3.4 h1:Y9by5lRaz57Y2EnSlXmY1YtCqtmPI88ueIvu1kIqmB8=
+github.com/teadove/teasutils/fiber_utils v0.3.4/go.mod h1:SJ8F4aRJokE+dS2H4RWH/7OerZUMsz3jFBNrUe22+yU=
 github.com/teadove/teasutils/service_utils v0.1.3 h1:YW5VALGup3bS0pV6kxKFQl/pspu1aHDJhBEeqZUyX6Y=
 github.com/teadove/teasutils/service_utils v0.1.3/go.mod h1:2NauqO2DE9iDngEESG5gYuBrSwpenwZsHg/8J6NMx6o=
 github.com/teadove/teasutils/utils v0.3.4 h1:Uf3hpSx3KhP+dN6RPcC5fdM/4TjrHc3j1pWzpxiV3ww=

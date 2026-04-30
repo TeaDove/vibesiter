@@ -31,6 +31,10 @@ func (r *Prompts) Render(name string, data map[string]any) (string, error) {
 		name += ".gohtml"
 	}
 
+	if data == nil {
+		data = make(map[string]any, 1)
+	}
+
 	data["jsonMarshal"] = func(v any) (string, error) {
 		marshalled, err := json.Marshal(v)
 

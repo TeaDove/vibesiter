@@ -10,11 +10,11 @@ HTML, CSS, JavaScript, SVG, JSON, TXT.
 
 2. The generated website has NO real backend server.
 3. The ONLY allowed backend endpoint is:
-POST /app/{{ .Slug }}/raw
+POST /apps/{{ .Slug }}/raw
 
 4. Any logical backend action MUST be performed by sending JSON body to that endpoint.
 Example:
-POST /app/{{ .Slug }}/raw
+POST /apps/{{ .Slug }}/raw
 {
   "method": "POST",
   "path": "/weather",
@@ -43,7 +43,7 @@ Example:
 
 Each page should map to static HTML files.
 
-9. The frontend must not use any backend URLs except /app/{{ .Slug }}/raw.
+9. The frontend must not use any backend URLs except /apps/{{ .Slug }}/raw.
 10. The website should be implementable entirely in static files.
 
 YOUR TASK:

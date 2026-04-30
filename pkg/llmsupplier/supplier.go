@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
+	"strings"
 	"time"
 	"vibesiter/pkg/llmsupplier/prompts"
 	"vibesiter/pkg/validators"
@@ -78,7 +79,7 @@ func (r *Supplier) chat(ctx context.Context, systemPrompt string, userPrompt str
 		Str("elapsed", time_utils.RoundDuration(time.Since(t0))).
 		Msg("llm.called")
 
-	err = json.Unmarshal([]byte(raw), &output)
+	err = json.Unmarshal([]byte(extractJSON(raw)), &output)
 	if err != nil {
 		return errors.Wrapf(err, "unmarshal: %s", raw)
 	}
@@ -89,4 +90,15 @@ func (r *Supplier) chat(ctx context.Context, systemPrompt string, userPrompt str
 	}
 
 	return nil
+}
+
+func extractJSON(raw string) string {
+	start := strings.Index(raw, "{")
+
+	end := strings.LastIndex(raw, "}")
+	if start == -1 || end == -1 || end <= start {
+		return raw
+	}
+
+	return raw[start : end+1]
 }
