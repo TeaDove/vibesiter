@@ -1,12 +1,23 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WS LAN Chat</title>
+    <title>Vibesiter</title>
+    <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#/">Vibesiter</a>
+        <nav class="topbar-actions">
+          <a class="btn btn-secondary" href="#/">All Sites</a>
+          <a class="btn btn-primary" href="#/create">Create Site</a>
+        </nav>
+      </header>
+      <main id="app"></main>
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    </div>
+    <script type="module" src="/app.js"></script>
   </body>
 </html>

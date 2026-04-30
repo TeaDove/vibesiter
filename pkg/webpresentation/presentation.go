@@ -42,7 +42,7 @@ func (r *Presentation) BuildApp() *fiber.App {
 	fiber_utils.WithSwagger(app, openapiSpec)
 
 	applicationGroup := app.Group("/apps")
-	applicationGroup.Get("/", func(c fiber.Ctx) error {
+	applicationGroup.Get("", func(c fiber.Ctx) error {
 		resp, err := r.managerService.ListApps(c.Context())
 		if err != nil {
 			return errors.Wrap(err, "list apps")
@@ -113,7 +113,7 @@ func (r *Presentation) BuildApp() *fiber.App {
 		return c.Type(strings.Split(path, ".")[len(strings.Split(path, "."))-1]).Send(resp)
 	})
 
-	app.Get("/", static.New("", static.Config{FS: frontend.Assets}))
+	app.Get("/*", static.New("", static.Config{FS: frontend.Assets}))
 
 	return app
 }
