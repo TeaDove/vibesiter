@@ -3,19 +3,22 @@ package llmsupplier
 import (
 	"context"
 	"vibesiter/pkg/dto"
+	"vibesiter/pkg/kvrepo"
 	"vibesiter/pkg/managerrepo"
 
 	"github.com/cockroachdb/errors"
+	"github.com/openai/openai-go/v3"
+	"github.com/teadove/teasutils/utils/test_utils"
 )
 
 func (r *Supplier) HTTP(
 	ctx context.Context,
 	app *managerrepo.Application,
 	req *dto.HTTPRequest,
-) (dto.LLMHTTPResponse, error) {
+) (dto.LLMHTTPResponse, []openai.ChatCompletionMessageParamUnion, error) {
 	systemPrompt, err := r.prompts.Render("http_system", map[string]any{"Slug": app.Slug})
 	if err != nil {
-		return dto.LLMHTTPResponse{}, errors.Wrap(err, "execute design site")
+		return dto.LLMHTTPResponse{}, nil, errors.Wrap(err, "execute design site")
 	}
 
 	userPrompt, err := r.prompts.Render("http_user",
@@ -28,15 +31,42 @@ func (r *Supplier) HTTP(
 		},
 	)
 	if err != nil {
-		return dto.LLMHTTPResponse{}, errors.Wrap(err, "execute design site")
+		return dto.LLMHTTPResponse{}, nil, errors.Wrap(err, "execute design site")
 	}
 
 	var output dto.LLMHTTPResponse
 
-	err = r.chat(ctx, systemPrompt, userPrompt, &output)
+	messages, err := r.chat(ctx, systemPrompt, userPrompt, &output)
 	if err != nil {
-		return dto.LLMHTTPResponse{}, errors.Wrap(err, "chat")
+		return dto.LLMHTTPResponse{}, nil, errors.Wrap(err, "chat")
 	}
 
-	return output, nil
+	return output, messages, nil
+}
+
+func (r *Supplier) HTTPContinue(
+	ctx context.Context,
+	messages []openai.ChatCompletionMessageParamUnion,
+	kvs []kvrepo.ApplicationKV,
+) (dto.LLMHTTPResponse, []openai.ChatCompletionMessageParamUnion, error) {
+	userPrompt, err := r.prompts.Render("http_actions_user", map[string]any{"KVs": kvs})
+	if err != nil {
+		return dto.LLMHTTPResponse{}, nil, errors.Wrap(err, "render")
+	}
+
+	messages = append(messages, openai.ChatCompletionMessageParamUnion{
+		OfUser: new(openai.ChatCompletionUserMessageParam{
+			Content: openai.ChatCompletionUserMessageParamContentUnion{OfString: openai.String(userPrompt)},
+		}),
+	})
+	test_utils.Pprint(messages)
+
+	var output dto.LLMHTTPResponse
+
+	messages, err = r.chatContinue(ctx, messages, &output)
+	if err != nil {
+		return dto.LLMHTTPResponse{}, nil, errors.Wrap(err, "chat continue")
+	}
+
+	return output, messages, nil
 }

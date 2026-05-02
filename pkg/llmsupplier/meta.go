@@ -19,7 +19,7 @@ func (r *Supplier) ValidateVibeSite(ctx context.Context, userPrompt string) (Val
 
 	var output ValidationResponse
 
-	err = r.chat(ctx, sysPrompt, userPrompt, &output)
+	_, err = r.chat(ctx, sysPrompt, userPrompt, &output)
 	if err != nil {
 		return ValidationResponse{}, errors.Wrap(err, "chat")
 	}
@@ -41,7 +41,7 @@ func (r *Supplier) ExtractSiteMeta(ctx context.Context, userPrompt string) (Site
 		return SiteMeta{}, errors.Wrap(err, "render")
 	}
 
-	err = r.chat(ctx, sysPrompt, userPrompt, &output)
+	_, err = r.chat(ctx, sysPrompt, userPrompt, &output)
 	if err != nil {
 		return SiteMeta{}, errors.Wrap(err, "chat")
 	}

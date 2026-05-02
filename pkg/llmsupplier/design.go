@@ -15,7 +15,7 @@ func (r *Supplier) DesignSite(ctx context.Context, slug string, userPrompt strin
 
 	var output dto.SiteDesign
 
-	err = r.chat(ctx, systemPrompt, userPrompt, &output)
+	_, err = r.chat(ctx, systemPrompt, userPrompt, &output)
 	if err != nil {
 		return dto.SiteDesign{}, errors.Wrap(err, "chat")
 	}
@@ -43,7 +43,7 @@ func (r *Supplier) GenerateSite(
 		return dto.Files{}, errors.Wrap(err, "execute design site")
 	}
 
-	err = r.chat(ctx, systemPrompt, userPrompt, &output)
+	_, err = r.chat(ctx, systemPrompt, userPrompt, &output)
 	if err != nil {
 		return dto.Files{}, errors.Wrap(err, "chat")
 	}

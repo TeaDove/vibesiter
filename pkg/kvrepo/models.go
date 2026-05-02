@@ -13,5 +13,5 @@ type ApplicationKV struct { // TODO добавить TTL
 	CreatedAt time.Time `gorm:"not null;autoCreateTime" json:"createdAt"`
 	UpdatedAt time.Time `gorm:"not null;autoUpdateTime" json:"updatedAt"`
 
-	Value any `gorm:"not null;serializer:json" json:"value"`
+	Value string `gorm:"not null" json:"value"`
 }

@@ -2,6 +2,7 @@ package kvrepo
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/cockroachdb/errors"
 	"github.com/google/uuid"
@@ -17,9 +18,14 @@ func New(db *gorm.DB) *Repo {
 }
 
 func (r *Repo) Set(ctx context.Context, appID uuid.UUID, key string, value any) error {
-	kv := ApplicationKV{ApplicationID: appID, Key: key, Value: value}
+	valueBytes, err := json.Marshal(value)
+	if err != nil {
+		return errors.Wrap(err, "marshal value")
+	}
 
-	err := r.db.WithContext(ctx).Save(&kv).Error
+	kv := ApplicationKV{ApplicationID: appID, Key: key, Value: string(valueBytes)}
+
+	err = r.db.WithContext(ctx).Save(&kv).Error
 	if err != nil {
 		return errors.Wrap(err, "save kv")
 	}

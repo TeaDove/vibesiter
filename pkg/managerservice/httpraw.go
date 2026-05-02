@@ -7,6 +7,7 @@ import (
 
 	"github.com/cockroachdb/errors"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"gorm.io/gorm"
 )
 
@@ -16,17 +17,33 @@ func (r *Service) HandleHTTP(ctx context.Context, appSlug string, req *dto.HTTPR
 		return dto.HTTPResponse{}, errors.Wrap(err, "select application by slug")
 	}
 
-	resp, err := r.llmSupplier.HTTP(ctx, &app, req)
+	zerolog.Ctx(ctx).Debug().
+		Str("slug", appSlug).
+		Interface("req", req).
+		Msg("handling.llm.http.request")
+
+	resp, messages, err := r.llmSupplier.HTTP(ctx, &app, req)
 	if err != nil {
 		return dto.HTTPResponse{}, errors.Wrap(err, "http request")
 	}
 
-	_, err = r.executeActions(ctx, app.ID, resp.Actions)
-	if err != nil {
-		return dto.HTTPResponse{}, errors.Wrap(err, "execute actions")
-	}
+	var kvs []kvrepo.ApplicationKV
 
-	return *resp.Response, nil
+	for {
+		kvs, err = r.executeActions(ctx, app.ID, resp.Actions)
+		if err != nil {
+			return dto.HTTPResponse{}, errors.Wrap(err, "execute actions")
+		}
+
+		if resp.Response != nil {
+			return *resp.Response, nil
+		}
+
+		resp, messages, err = r.llmSupplier.HTTPContinue(ctx, messages, kvs)
+		if err != nil {
+			return dto.HTTPResponse{}, errors.Wrap(err, "http continue")
+		}
+	}
 }
 
 func (r *Service) executeActions(

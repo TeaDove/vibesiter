@@ -7,7 +7,7 @@ package dto
 type ActionType byte //nolint: recvcheck // required by JSON and SQL interfaces
 
 type ActionKV struct {
-	Type  ActionType `json:"type"          validate:"required"`
-	Key   string     `json:"key"           validate:"required"`
-	Value any        `json:"val,omitempty"`
+	Type  ActionType `json:"type"            validate:"required"`
+	Key   string     `json:"key"             validate:"required"`
+	Value any        `json:"value,omitempty"`
 }
